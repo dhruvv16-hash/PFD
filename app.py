@@ -5,13 +5,18 @@ import plotly.express as px
 import subprocess
 import os
 import sys
+import time
 
 # Ensure project root is in system path for clean module imports in the cloud
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from db.connection import init_db
 
+# Database File Path
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "db", "platform.db")
+
 # Auto-initialize database schema if empty/new
-init_db()
+if not os.path.exists(DB_PATH) or os.path.getsize(DB_PATH) == 0:
+    init_db()
 
 # Auto-cleanup overlapping mock/corrupted closed positions
 try:
@@ -26,6 +31,29 @@ try:
         conn.commit()
 except Exception:
     pass
+
+# Auto-sync live filings on page load (throttled to at most once per hour)
+sync_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "db", "last_sync.txt")
+should_sync = False
+if not os.path.exists(sync_file):
+    should_sync = True
+else:
+    try:
+        with open(sync_file, "r") as f:
+            last_sync_time = float(f.read().strip())
+        if time.time() - last_sync_time > 3600:  # 1 hour
+            should_sync = True
+    except Exception:
+        should_sync = True
+
+if should_sync:
+    try:
+        with open(sync_file, "w") as f:
+            f.write(str(time.time()))
+        # Trigger non-blocking background run of the ingestion pipeline
+        subprocess.Popen([sys.executable, "run.py"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception:
+        pass
 
 # Configure streamlit page setup
 st.set_page_config(
@@ -43,26 +71,36 @@ st.markdown("""
             background-color: #f8fafc !important;
         }
         
-        /* Force dark text for all text elements inside Light Canvas area for 100% visibility */
+        /* Force dark and bold text ONLY inside markdown text areas for maximum visibility */
+        div[data-testid="stMarkdownContainer"] p, 
+        div[data-testid="stMarkdownContainer"] li, 
+        div[data-testid="stMarkdownContainer"] span, 
+        div[data-testid="stMarkdownContainer"] label {
+            color: #0f172a !important;
+            font-weight: 700 !important; /* Force bold font weight */
+            font-size: 1.1rem !important; /* Thicker/larger readable text */
+        }
+        
+        div[data-testid="stMarkdownContainer"] strong, 
+        div[data-testid="stMarkdownContainer"] b {
+            color: #0f172a !important;
+            font-weight: 900 !important; /* Ultra-bold for emphasis */
+        }
+
         [data-testid="stAppViewContainer"] h1, 
         [data-testid="stAppViewContainer"] h2, 
         [data-testid="stAppViewContainer"] h3, 
         [data-testid="stAppViewContainer"] h4, 
         [data-testid="stAppViewContainer"] h5, 
-        [data-testid="stAppViewContainer"] h6, 
-        [data-testid="stAppViewContainer"] p, 
-        [data-testid="stAppViewContainer"] li, 
-        [data-testid="stAppViewContainer"] span, 
-        [data-testid="stAppViewContainer"] strong, 
-        [data-testid="stAppViewContainer"] b, 
-        [data-testid="stAppViewContainer"] em, 
-        [data-testid="stAppViewContainer"] label {
+        [data-testid="stAppViewContainer"] h6 {
             color: #0f172a !important;
+            font-weight: 900 !important; /* Ultra-bold headers */
         }
         
-        /* Ensure KaTeX (LaTeX math equations) text is also dark navy */
+        /* Ensure KaTeX (LaTeX math equations) text is also dark navy and bold */
         .katex, .katex * {
             color: #0f172a !important;
+            font-weight: 700 !important;
         }
         
         /* Sidebar styling (Deep Slate Navy) */
@@ -70,7 +108,7 @@ st.markdown("""
             background-color: #0f172a !important;
         }
         
-        /* Force light text for all elements inside Dark Sidebar for high contrast */
+        /* Force light and bold text for all elements inside Dark Sidebar for high contrast */
         [data-testid="stSidebar"] h1,
         [data-testid="stSidebar"] h2,
         [data-testid="stSidebar"] h3,
@@ -80,14 +118,14 @@ st.markdown("""
         [data-testid="stSidebar"] span,
         [data-testid="stSidebar"] .stRadio label p {
             color: #f1f5f9 !important;
-            font-size: 1.05rem !important;
-            font-weight: 600 !important;
+            font-size: 1.1rem !important;
+            font-weight: 700 !important; /* Bold sidebar options */
         }
         
         /* Main Header style */
         .main-header {
-            font-size: 2.5rem;
-            font-weight: 800;
+            font-size: 2.6rem;
+            font-weight: 900 !important;
             color: #0f172a !important;
             margin-bottom: 0.3rem;
             letter-spacing: -0.04em;
@@ -95,10 +133,10 @@ st.markdown("""
         
         /* Subheader style */
         .subheader-text {
-            font-size: 1.15rem;
-            color: #475569 !important;
+            font-size: 1.2rem;
+            color: #334155 !important;
             margin-bottom: 2rem;
-            font-weight: 500;
+            font-weight: 700 !important;
         }
         
         /* Premium KPI Cards with top border accent */
@@ -106,26 +144,26 @@ st.markdown("""
             background-color: #ffffff !important;
             border-radius: 12px;
             padding: 1.5rem;
-            box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.05), 0 4px 6px -2px rgba(15, 23, 42, 0.05);
-            border-top: 4px solid #3b82f6 !important;
+            box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.08);
+            border-top: 5px solid #3b82f6 !important;
             margin-bottom: 1rem;
-            border-left: 1px solid #e2e8f0 !important;
-            border-right: 1px solid #e2e8f0 !important;
-            border-bottom: 1px solid #e2e8f0 !important;
+            border-left: 1px solid #cbd5e1 !important;
+            border-right: 1px solid #cbd5e1 !important;
+            border-bottom: 1px solid #cbd5e1 !important;
         }
         
         /* Value contrast inside KPI cards */
         .kpi-val {
-            font-size: 2.1rem;
-            font-weight: 800;
+            font-size: 2.2rem;
+            font-weight: 900 !important;
             color: #0f172a !important;
         }
         
         /* Labels inside KPI cards */
         .kpi-label {
-            font-size: 0.85rem;
-            color: #64748b !important;
-            font-weight: 700;
+            font-size: 0.9rem;
+            color: #475569 !important;
+            font-weight: 800 !important;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             margin-bottom: 0.3rem;
@@ -134,10 +172,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Database Connection Helper
-DB_PATH = os.path.join(os.path.dirname(__file__), "db", "platform.db")
-
 def get_connection():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
     return conn
 
