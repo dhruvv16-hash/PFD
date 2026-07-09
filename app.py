@@ -191,19 +191,6 @@ nav_choice = st.sidebar.radio(
     ["Strategy Overview", "Active Signals", "Trade Tracker", "Backtesting Explorer", "Strategy Reports"]
 )
 
-# Sidebar Action: Live Sync Ingestion
-st.sidebar.markdown("---")
-st.sidebar.markdown("### Data Ingestion")
-if st.sidebar.button("🔄 Sync Live Filings Now"):
-    st.sidebar.info("Running pipeline ingestion...")
-    try:
-        # Run run.py as a subprocess to pull data and recalculate
-        res = subprocess.run([sys.executable, "run.py"], capture_output=True, text=True, check=True)
-        st.sidebar.success("Disclosures synced successfully!")
-        st.rerun()
-    except Exception as e:
-        st.sidebar.error(f"Sync failed: {e}")
-
 # Page 0: Strategy Overview
 if nav_choice == "Strategy Overview":
     st.markdown("<div class='main-header'>📖 Strategy Overview</div>", unsafe_allow_html=True)
