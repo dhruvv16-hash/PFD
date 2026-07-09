@@ -1,0 +1,11 @@
+# Environment variables
+.env
+
+# Logs and databases
+logs/
+db/*.db
+communication/*_mock_outbox.log
+
+# Python cache
+__pycache__/
+*.pyc
