@@ -38,9 +38,31 @@ st.set_page_config(
 # Custom Premium Styling & Color Contrast Enhancements
 st.markdown("""
     <style>
-        /* Main application background */
+        /* Main application background (Light Canvas) */
         [data-testid="stAppViewContainer"] {
             background-color: #f8fafc !important;
+        }
+        
+        /* Force dark text for all text elements inside Light Canvas area for 100% visibility */
+        [data-testid="stAppViewContainer"] h1, 
+        [data-testid="stAppViewContainer"] h2, 
+        [data-testid="stAppViewContainer"] h3, 
+        [data-testid="stAppViewContainer"] h4, 
+        [data-testid="stAppViewContainer"] h5, 
+        [data-testid="stAppViewContainer"] h6, 
+        [data-testid="stAppViewContainer"] p, 
+        [data-testid="stAppViewContainer"] li, 
+        [data-testid="stAppViewContainer"] span, 
+        [data-testid="stAppViewContainer"] strong, 
+        [data-testid="stAppViewContainer"] b, 
+        [data-testid="stAppViewContainer"] em, 
+        [data-testid="stAppViewContainer"] label {
+            color: #0f172a !important;
+        }
+        
+        /* Ensure KaTeX (LaTeX math equations) text is also dark navy */
+        .katex, .katex * {
+            color: #0f172a !important;
         }
         
         /* Sidebar styling (Deep Slate Navy) */
@@ -48,7 +70,14 @@ st.markdown("""
             background-color: #0f172a !important;
         }
         
-        /* Sidebar navigation labels contrast */
+        /* Force light text for all elements inside Dark Sidebar for high contrast */
+        [data-testid="stSidebar"] h1,
+        [data-testid="stSidebar"] h2,
+        [data-testid="stSidebar"] h3,
+        [data-testid="stSidebar"] h4,
+        [data-testid="stSidebar"] p,
+        [data-testid="stSidebar"] label,
+        [data-testid="stSidebar"] span,
         [data-testid="stSidebar"] .stRadio label p {
             color: #f1f5f9 !important;
             font-size: 1.05rem !important;
@@ -59,7 +88,7 @@ st.markdown("""
         .main-header {
             font-size: 2.5rem;
             font-weight: 800;
-            color: #0f172a;
+            color: #0f172a !important;
             margin-bottom: 0.3rem;
             letter-spacing: -0.04em;
         }
@@ -67,35 +96,35 @@ st.markdown("""
         /* Subheader style */
         .subheader-text {
             font-size: 1.15rem;
-            color: #475569;
+            color: #475569 !important;
             margin-bottom: 2rem;
             font-weight: 500;
         }
         
         /* Premium KPI Cards with top border accent */
         .kpi-card {
-            background-color: #ffffff;
+            background-color: #ffffff !important;
             border-radius: 12px;
             padding: 1.5rem;
             box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.05), 0 4px 6px -2px rgba(15, 23, 42, 0.05);
-            border-top: 4px solid #3b82f6; /* Slate Blue Accent */
+            border-top: 4px solid #3b82f6 !important;
             margin-bottom: 1rem;
-            border-left: 1px solid #e2e8f0;
-            border-right: 1px solid #e2e8f0;
-            border-bottom: 1px solid #e2e8f0;
+            border-left: 1px solid #e2e8f0 !important;
+            border-right: 1px solid #e2e8f0 !important;
+            border-bottom: 1px solid #e2e8f0 !important;
         }
         
         /* Value contrast inside KPI cards */
         .kpi-val {
             font-size: 2.1rem;
             font-weight: 800;
-            color: #0f172a;
+            color: #0f172a !important;
         }
         
         /* Labels inside KPI cards */
         .kpi-label {
             font-size: 0.85rem;
-            color: #64748b;
+            color: #64748b !important;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
