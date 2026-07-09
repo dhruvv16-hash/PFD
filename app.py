@@ -21,41 +21,71 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Premium Styling
+# Custom Premium Styling & Color Contrast Enhancements
 st.markdown("""
     <style>
-        .reportview-container {
-            background: #f4f6f9;
+        /* Main application background */
+        [data-testid="stAppViewContainer"] {
+            background-color: #f8fafc !important;
         }
+        
+        /* Sidebar styling (Deep Slate Navy) */
+        [data-testid="stSidebar"] {
+            background-color: #0f172a !important;
+        }
+        
+        /* Sidebar navigation labels contrast */
+        [data-testid="stSidebar"] .stRadio label p {
+            color: #f1f5f9 !important;
+            font-size: 1.05rem !important;
+            font-weight: 600 !important;
+        }
+        
+        /* Main Header style */
         .main-header {
-            font-size: 2.2rem;
+            font-size: 2.5rem;
             font-weight: 800;
-            color: #0f2c59;
-            margin-bottom: 0.5rem;
+            color: #0f172a;
+            margin-bottom: 0.3rem;
+            letter-spacing: -0.04em;
         }
+        
+        /* Subheader style */
         .subheader-text {
-            font-size: 1.1rem;
-            color: #555555;
+            font-size: 1.15rem;
+            color: #475569;
             margin-bottom: 2rem;
+            font-weight: 500;
         }
+        
+        /* Premium KPI Cards with top border accent */
         .kpi-card {
             background-color: #ffffff;
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            border-left: 5px solid #3f72af;
+            box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.05), 0 4px 6px -2px rgba(15, 23, 42, 0.05);
+            border-top: 4px solid #3b82f6; /* Slate Blue Accent */
             margin-bottom: 1rem;
+            border-left: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
         }
+        
+        /* Value contrast inside KPI cards */
         .kpi-val {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #0f2c59;
+            font-size: 2.1rem;
+            font-weight: 800;
+            color: #0f172a;
         }
+        
+        /* Labels inside KPI cards */
         .kpi-label {
-            font-size: 0.9rem;
-            color: #888888;
-            font-weight: 600;
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 700;
             text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.3rem;
         }
     </style>
 """, unsafe_allow_html=True)
