@@ -243,6 +243,12 @@ elif nav_choice == "Backtesting Explorer":
         "28% Win 10% %", "28% Win 20% %", "35% Count", "35% Return %", "35% Win 10% %", "35% Win 20% %"
     ])
     
+    # Filter display to show only counts and win rates (removing standard/market return percentages)
+    df_yby_display = df_yby[[
+        "Year", "28% Count", "28% Win 10% %", "28% Win 20% %", 
+        "35% Count", "35% Win 10% %", "35% Win 20% %"
+    ]]
+    
     # KPIs Summary Card
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -252,20 +258,19 @@ elif nav_choice == "Backtesting Explorer":
     with col3:
         st.markdown("<div class='kpi-card'><div class='kpi-label'>Win Rate (&ge; 20% Return)</div><div class='kpi-val'>92.3%</div><span style='color:#666'>12 of 13 trades hit target</span></div>", unsafe_allow_html=True)
         
-    # Chart: Return Comparison
-    st.markdown("### Returns Comparison (IAMS vs. Index)")
-    fig = px.bar(df_yby, x="Year", y=["Market Return %", "28% Return %", "35% Return %"],
+    # Chart: Win Rate Comparison
+    st.markdown("### Strategy Win Rate Comparison (Target: $\ge 20\%$ Return)")
+    fig = px.bar(df_yby, x="Year", y=["28% Win 20% %", "35% Win 20% %"],
                  barmode="group",
-                 title="Annual Average Returns captured per Tier",
-                 labels={"value": "Return %", "variable": "Portfolio Tier"},
+                 title="Annual Win Rate (>= 20% Return) Comparison per Tier",
+                 labels={"value": "Win Rate %", "variable": "Portfolio Tier"},
                  color_discrete_map={
-                     "Market Return %": "#cccccc",
-                     "28% Return %": "#3f72af",
-                     "35% Return %": "#0f2c59"
+                     "28% Win 20% %": "#3f72af",
+                     "35% Win 20% %": "#0f2c59"
                  })
     st.plotly_chart(fig, use_container_width=True)
     
-    st.dataframe(df_yby, use_container_width=True, hide_index=True)
+    st.dataframe(df_yby_display, use_container_width=True, hide_index=True)
 
 # Page 4: Strategy Reports
 elif nav_choice == "Strategy Reports":
