@@ -50,10 +50,17 @@ if should_sync:
     try:
         with open(sync_file, "w") as f:
             f.write(str(time.time()))
-        # Trigger non-blocking background run of the ingestion pipeline
-        subprocess.Popen([sys.executable, "run.py"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except Exception:
         pass
+    
+    with st.spinner("🔄 Auto-syncing latest promoter filings and active signals..."):
+        try:
+            # Trigger run of the ingestion pipeline
+            subprocess.run([sys.executable, "run.py"], capture_output=True, text=True, check=True)
+            # Rerun the app to load the new data from the database
+            st.rerun()
+        except Exception:
+            pass
 
 # Configure streamlit page setup
 st.set_page_config(
