@@ -29,6 +29,17 @@ class TradeTracker(BaseAgent):
         initial_inputs = pipeline_state.get("initial_inputs", {})
         return initial_inputs.get("quarter", "2026-Q2")
 
+    def _is_quarter_after(self, q1: str, q2: str) -> bool:
+        # Returns True if q1 (target) is strictly after q2 (entry) chronologically
+        try:
+            y1, qtr1 = q1.split("-")
+            y2, qtr2 = q2.split("-")
+            year1, q_num1 = int(y1), int(qtr1[1])
+            year2, q_num2 = int(y2), int(qtr2[1])
+            return (year1 > year2) or (year1 == year2 and q_num1 > q_num2)
+        except Exception:
+            return False
+
     def _get_simulated_return(self, symbol: str, quarter: str, prom_delta: float, fii_delta: float, dii_delta: float) -> float:
         # Generate a deterministic return for consistent tracking
         h = int(hash(f"{symbol}-{quarter}")) % 1000000
@@ -108,7 +119,7 @@ class TradeTracker(BaseAgent):
                     continue
                 
                 # Rule 2: Time stop / target check (if we moved forward by 1 quarter)
-                if entry_q != quarter:
+                if self._is_quarter_after(quarter, entry_q):
                     sim_ret = self._get_simulated_return(sym, entry_q, prom_delta, fii_delta, dii_delta)
                     current_price = round(t["entry_price"] * (1.0 + sim_ret / 100.0), 2)
                     

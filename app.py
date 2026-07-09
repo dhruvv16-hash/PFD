@@ -13,6 +13,20 @@ from db.connection import init_db
 # Auto-initialize database schema if empty/new
 init_db()
 
+# Auto-cleanup overlapping mock/corrupted closed positions
+try:
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            """
+            DELETE FROM active_trades 
+            WHERE status = 'Closed' 
+            AND symbol IN (SELECT symbol FROM active_trades WHERE status = 'Open')
+            """
+        )
+        conn.commit()
+except Exception:
+    pass
+
 # Configure streamlit page setup
 st.set_page_config(
     page_title="IAMS | Insider Accumulation & Momentum Strategy",
