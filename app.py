@@ -72,7 +72,7 @@ def get_connection():
 st.sidebar.markdown("<h2 style='color:#0f2c59;'>IAMS Controls</h2>", unsafe_allow_html=True)
 nav_choice = st.sidebar.radio(
     "Navigation Menu",
-    ["Active Signals", "Trade Tracker", "Backtesting Explorer", "Strategy Reports"]
+    ["Strategy Overview", "Active Signals", "Trade Tracker", "Backtesting Explorer", "Strategy Reports"]
 )
 
 # Sidebar Action: Live Sync Ingestion
@@ -88,8 +88,48 @@ if st.sidebar.button("🔄 Sync Live Filings Now"):
     except Exception as e:
         st.sidebar.error(f"Sync failed: {e}")
 
+# Page 0: Strategy Overview
+if nav_choice == "Strategy Overview":
+    st.markdown("<div class='main-header'>📖 Strategy Overview</div>", unsafe_allow_html=True)
+    st.markdown("<div class='subheader-text'>Core logic, indicators, and parameters of the Insider Accumulation & Momentum Strategy.</div>", unsafe_allow_html=True)
+    
+    st.markdown(r"""
+    ### 1. Strategy Philosophy
+    The **Insider Accumulation & Momentum Strategy (IAMS)** is an institutional-grade quantitative model that tracks aggressive share accumulation by company founders and promoters. Promoters hold the highest informational asymmetry about their own companies; when they buy heavily, it signals major future operational and share-price momentum.
+    
+    ---
+    
+    ### 2. Strategic Indicators
+    * **Promoter Delta ($\Delta\text{Promoter}$):** Quarter-over-quarter percentage change in promoter holdings.
+    * **FII & DII Deltas:** Quarter-over-quarter change in Foreign & Domestic Institutional holdings.
+    * **Expected Drift Metric:** A composite alpha momentum score calculated as:
+      $$\text{Expected Drift} = 0.55 \times \Delta\text{Promoter} + 0.45 \times \Delta\text{FII} + 0.35 \times \Delta\text{DII}$$
+      
+    ---
+    
+    ### 3. Screen Filtering Tiers
+    
+    * **Standard Filter (Broad Selection):**
+      * Promoter Delta $\ge 28.0\%$
+    * **Fine-Tuned Filter (High Conviction):**
+      * Promoter Delta $\ge 35.0\%$
+      * Expected Drift $\ge 16.0\%$
+      * FII Delta $\ge -12.0\%$ (safety check)
+      * DII Delta $\ge -12.0\%$ (safety check)
+      
+    ---
+    
+    ### 4. Trade Execution Protocols
+    * **Entry Signal:** Triggers a Telegram alert immediately upon database sync. Buy at market opening the next morning.
+    * **Profit Targets:** 
+      * **Target 10%:** Sell 50% of the position.
+      * **Target 20%:** Sell the remaining 50% of the position.
+    * **Risk Stop-Loss:** Exit immediately if subsequent quarterly filings show any promoter selling ($\Delta\text{Promoter} < 0\%$).
+    * **Time Stop:** Exit after 1 quarter (3 months) if target or stop-loss is not hit.
+    """)
+
 # Page 1: Active Signals
-if nav_choice == "Active Signals":
+elif nav_choice == "Active Signals":
     st.markdown("<div class='main-header'>📈 Active Trade Signals</div>", unsafe_allow_html=True)
     st.markdown("<div class='subheader-text'>Current quarter alerts based on active corporate filings accumulation data.</div>", unsafe_allow_html=True)
     
