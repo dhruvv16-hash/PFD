@@ -6,6 +6,13 @@ import subprocess
 import os
 import sys
 
+# Ensure project root is in system path for clean module imports in the cloud
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from db.connection import init_db
+
+# Auto-initialize database schema if empty/new
+init_db()
+
 # Configure streamlit page setup
 st.set_page_config(
     page_title="IAMS | Insider Accumulation & Momentum Strategy",
