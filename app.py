@@ -13,30 +13,6 @@ from db.connection import init_db
 # Auto-initialize database schema if empty/new
 init_db()
 
-# Auto-sync on startup if database is empty
-def check_and_autosync():
-    db_path = os.path.join(os.path.dirname(__file__), "db", "platform.db")
-    conn = sqlite3.connect(db_path)
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='company_quarterly_analytics'")
-        table_exists = cursor.fetchone()
-        if table_exists:
-            cursor.execute("SELECT COUNT(*) FROM company_quarterly_analytics")
-            count = cursor.fetchone()[0]
-            if count == 0:
-                st.info("Database is empty. Automatically syncing live disclosures, please wait...")
-                from run import main as run_pipeline
-                run_pipeline()
-                st.success("Auto-sync complete!")
-                st.rerun()
-    except Exception as e:
-        st.warning(f"Initial auto-sync check failed: {e}")
-    finally:
-        conn.close()
-
-check_and_autosync()
-
 # Configure streamlit page setup
 st.set_page_config(
     page_title="IAMS | Insider Accumulation & Momentum Strategy",
@@ -96,7 +72,7 @@ def get_connection():
 st.sidebar.markdown("<h2 style='color:#0f2c59;'>IAMS Controls</h2>", unsafe_allow_html=True)
 nav_choice = st.sidebar.radio(
     "Navigation Menu",
-    ["Strategy Overview", "Active Signals", "Trade Tracker", "Backtesting Explorer", "Strategy Reports"]
+    ["Active Signals", "Trade Tracker", "Backtesting Explorer", "Strategy Reports"]
 )
 
 # Sidebar Action: Live Sync Ingestion
@@ -105,60 +81,15 @@ st.sidebar.markdown("### Data Ingestion")
 if st.sidebar.button("🔄 Sync Live Filings Now"):
     st.sidebar.info("Running pipeline ingestion...")
     try:
-        # Run the ingestion pipeline in-process to inherit secrets and environment variables
-        from run import main as run_pipeline
-        run_pipeline()
+        # Run run.py as a subprocess to pull data and recalculate
+        res = subprocess.run([sys.executable, "run.py"], capture_output=True, text=True, check=True)
         st.sidebar.success("Disclosures synced successfully!")
         st.rerun()
     except Exception as e:
-        import traceback
         st.sidebar.error(f"Sync failed: {e}")
-        st.sidebar.code(traceback.format_exc())
-
-# Page 0: Strategy Overview
-if nav_choice == "Strategy Overview":
-    st.markdown("<div class='main-header'>📘 IAMS Strategy & Methodology</div>", unsafe_allow_html=True)
-    st.markdown("<div class='subheader-text'>Understanding the core logic and high-accuracy performance parameters.</div>", unsafe_allow_html=True)
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("### 🔍 Core Trade Logic")
-        st.markdown("""
-            The **Insider Accumulation & Momentum Strategy (IAMS)** is built upon tracking **informational asymmetry** in the equity markets:
-            
-            1. **Insider Advantage**: Promoters and founders possess complete visibility into their company's upcoming contracts, product pipelines, and operational health.
-            2. **Significant Accumulation**: When promoters increase their ownership stake by a massive margin (**&ge; 28%** for standard signals or **&ge; 35%** for high-conviction signals), it represents an aggressive allocation of their personal capital.
-            3. **Supply Squeeze**: Large promoter block acquisitions combined with stable or increasing institutional (FII/DII) holdings drastically reduces the public free float of the stock, creating a natural supply squeeze.
-        """)
-    
-    with col2:
-        st.markdown("### 🎯 Why It Works With High Accuracy")
-        st.markdown("""
-            The strategy achieves an aggregate **100% win rate for &ge; 10% returns** and a **92.3% win rate for &ge; 20% returns** due to three strict filters:
-            
-            * **Massive Delta Thresholds**: Small token purchases by promoters are ignored. By filtering for $\Delta \ge 28\\%$, we isolate only true insider high-conviction events.
-            * **Expected Drift Score**: Signals must satisfy a momentum drift formula combining promoter and institutional actions:
-              $$\\text{Expected Drift} = 0.55 \\times \\Delta\\text{Promoter} + 0.45 \\times \\Delta\\text{FII} + 0.35 \\times \\Delta\\text{DII} \\ge 16.0\\%$$
-            * **Strict Exit Protocols**: 
-              * **Target Milestones**: Take profits at $+10\%$ or $+20\%$ returns.
-              * **Stop-Loss Protection**: Immediate exit if next quarter filings show promoter selling ($\Delta < 0\\%$, indicating exit of insider confidence).
-              * **Time Stop**: Auto-exit after exactly 1 quarter if targets aren't hit.
-        """)
-        
-    st.markdown("---")
-    st.markdown("### ⚙️ Multi-Agent Automated Ingestion Pipeline")
-    st.markdown("""
-        The system runs fully automated daily checks via a pipeline of specialized agents:
-        * **UniverseAgent**: Syncs the master index of all active companies.
-        * **CompanyAgent & Ingestion Parser**: Fetches live quarterly shareholding patterns directly from Screener.in.
-        * **MergeAgent**: Standardizes public holdings to exactly $100\%$ residual to prevent rounding or omitted government data issues.
-        * **AnalyticsAgent**: Computes Promoter/FII/DII deltas and expected drift scores.
-        * **TradeTracker**: Verifies live current market prices (CMP) via Yahoo Finance and issues entrance/exit triggers.
-        * **TelegramAgent**: Broadcasts real-time entry and exit alerts to your subscriber channel.
-    """)
 
 # Page 1: Active Signals
-elif nav_choice == "Active Signals":
+if nav_choice == "Active Signals":
     st.markdown("<div class='main-header'>📈 Active Trade Signals</div>", unsafe_allow_html=True)
     st.markdown("<div class='subheader-text'>Current quarter alerts based on active corporate filings accumulation data.</div>", unsafe_allow_html=True)
     
@@ -226,7 +157,7 @@ elif nav_choice == "Active Signals":
             "dii_delta": "DII Delta %",
             "entry_price": "Entry Price (CMP)"
         })
-        st.dataframe(display_df, use_container_width=True, hide_index=True)
+        st.dataframe(display_df, width="stretch", hide_index=True)
 
 # Page 2: Trade Tracker
 elif nav_choice == "Trade Tracker":
@@ -261,30 +192,14 @@ elif nav_choice == "Trade Tracker":
         if df_open.empty:
             st.info("No active open positions.")
         else:
-            df_open_display = df_open.rename(columns={
-                "symbol": "Ticker",
-                "entry_quarter": "Entry Quarter",
-                "entry_price": "Entry Price (CMP)",
-                "target_price_10": "Target 10% Milestone",
-                "target_price_20": "Target 20% Milestone",
-                "entry_date": "Signal Date"
-            })
-            st.dataframe(df_open_display, use_container_width=True, hide_index=True)
+            st.dataframe(df_open, width="stretch", hide_index=True)
             
         st.markdown("### Closed Positions Log")
         df_closed = df_trades[df_trades["status"] == "Closed"][["symbol", "entry_quarter", "entry_price", "exit_price", "exit_reason", "exit_date"]]
         if df_closed.empty:
             st.info("No closed trades logged.")
         else:
-            df_closed_display = df_closed.rename(columns={
-                "symbol": "Ticker",
-                "entry_quarter": "Entry Quarter",
-                "entry_price": "Entry Price",
-                "exit_price": "Exit Price",
-                "exit_reason": "Exit Reason",
-                "exit_date": "Exit Date"
-            })
-            st.dataframe(df_closed_display, use_container_width=True, hide_index=True)
+            st.dataframe(df_closed, width="stretch", hide_index=True)
 
 # Page 3: Backtesting Explorer
 elif nav_choice == "Backtesting Explorer":
@@ -344,7 +259,7 @@ elif nav_choice == "Backtesting Explorer":
         st.markdown("<div class='kpi-card'><div class='kpi-label'>Win Rate (&ge; 20% Return)</div><div class='kpi-val'>92.3%</div><span style='color:#666'>12 of 13 trades hit target</span></div>", unsafe_allow_html=True)
         
     # Chart: Win Rate Comparison
-    st.markdown("### Strategy Win Rate Comparison (Target: $\ge 20\%$ Return)")
+    st.markdown(r"### Strategy Win Rate Comparison (Target: $\ge 20\%$ Return)")
     fig = px.bar(df_yby, x="Year", y=["28% Win 20% %", "35% Win 20% %"],
                  barmode="group",
                  title="Annual Win Rate (>= 20% Return) Comparison per Tier",
@@ -355,7 +270,7 @@ elif nav_choice == "Backtesting Explorer":
                  })
     st.plotly_chart(fig, use_container_width=True)
     
-    st.dataframe(df_yby_display, use_container_width=True, hide_index=True)
+    st.dataframe(df_yby_display, width="stretch", hide_index=True)
 
 # Page 4: Strategy Reports
 elif nav_choice == "Strategy Reports":
