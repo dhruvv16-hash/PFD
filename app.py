@@ -13,6 +13,30 @@ from db.connection import init_db
 # Auto-initialize database schema if empty/new
 init_db()
 
+# Auto-sync on startup if database is empty
+def check_and_autosync():
+    db_path = os.path.join(os.path.dirname(__file__), "db", "platform.db")
+    conn = sqlite3.connect(db_path)
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='company_quarterly_analytics'")
+        table_exists = cursor.fetchone()
+        if table_exists:
+            cursor.execute("SELECT COUNT(*) FROM company_quarterly_analytics")
+            count = cursor.fetchone()[0]
+            if count == 0:
+                st.info("Database is empty. Automatically syncing live disclosures, please wait...")
+                from run import main as run_pipeline
+                run_pipeline()
+                st.success("Auto-sync complete!")
+                st.rerun()
+    except Exception as e:
+        st.warning(f"Initial auto-sync check failed: {e}")
+    finally:
+        conn.close()
+
+check_and_autosync()
+
 # Configure streamlit page setup
 st.set_page_config(
     page_title="IAMS | Insider Accumulation & Momentum Strategy",
@@ -81,12 +105,15 @@ st.sidebar.markdown("### Data Ingestion")
 if st.sidebar.button("🔄 Sync Live Filings Now"):
     st.sidebar.info("Running pipeline ingestion...")
     try:
-        # Run run.py as a subprocess to pull data and recalculate
-        res = subprocess.run([sys.executable, "run.py"], capture_output=True, text=True, check=True)
+        # Run the ingestion pipeline in-process to inherit secrets and environment variables
+        from run import main as run_pipeline
+        run_pipeline()
         st.sidebar.success("Disclosures synced successfully!")
         st.rerun()
     except Exception as e:
+        import traceback
         st.sidebar.error(f"Sync failed: {e}")
+        st.sidebar.code(traceback.format_exc())
 
 # Page 0: Strategy Overview
 if nav_choice == "Strategy Overview":
