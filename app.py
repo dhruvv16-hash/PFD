@@ -192,14 +192,30 @@ elif nav_choice == "Trade Tracker":
         if df_open.empty:
             st.info("No active open positions.")
         else:
-            st.dataframe(df_open, use_container_width=True, hide_index=True)
+            df_open_display = df_open.rename(columns={
+                "symbol": "Ticker",
+                "entry_quarter": "Entry Quarter",
+                "entry_price": "Entry Price (CMP)",
+                "target_price_10": "Target 10% Milestone",
+                "target_price_20": "Target 20% Milestone",
+                "entry_date": "Signal Date"
+            })
+            st.dataframe(df_open_display, use_container_width=True, hide_index=True)
             
         st.markdown("### Closed Positions Log")
         df_closed = df_trades[df_trades["status"] == "Closed"][["symbol", "entry_quarter", "entry_price", "exit_price", "exit_reason", "exit_date"]]
         if df_closed.empty:
             st.info("No closed trades logged.")
         else:
-            st.dataframe(df_closed, use_container_width=True, hide_index=True)
+            df_closed_display = df_closed.rename(columns={
+                "symbol": "Ticker",
+                "entry_quarter": "Entry Quarter",
+                "entry_price": "Entry Price",
+                "exit_price": "Exit Price",
+                "exit_reason": "Exit Reason",
+                "exit_date": "Exit Date"
+            })
+            st.dataframe(df_closed_display, use_container_width=True, hide_index=True)
 
 # Page 3: Backtesting Explorer
 elif nav_choice == "Backtesting Explorer":
